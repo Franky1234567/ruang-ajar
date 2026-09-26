@@ -1,64 +1,56 @@
-# Nuxt Starter Template
+# Ruang Ajar
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+Asisten mengajar untuk guru: susun materi, bikin ujian, cek jawaban murid, kuis, dan papan peringkat — semua dibantu AI. Multi-guru (login Google), data tersimpan per-guru dan sinkron antar perangkat.
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+Bukan cuma Bahasa Inggris — AI menyesuaikan mata pelajaran dari topik (Matematika, Bahasa Arab, IPA, dll).
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+## Fitur
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+- **Susun Materi** — dari satu topik, AI menyusun draf lengkap (tujuan, penjelasan, pola, contoh, latihan, kunci). Bisa **upload foto/PDF** materi sebagai acuan (Gemini vision).
+- **Generate massal** — upload 1 PDF berisi banyak topik → AI pecah tiap topik jadi materi terpisah otomatis.
+- **Bank Contoh** — tempel banyak contoh soal sekaligus, auto dipisah jadi item.
+- **Buat Ujian** — pilih materi + tipe soal → AI generate soal ujian yang meniru gaya contoh di Bank, bisa diedit & disalin.
+- **Cek Jawaban** — murid menjawab, AI memberi masukan + skor, guru menyetujui sebelum poin masuk.
+- **Kuis** — AI membuat soal pilihan ganda dari sebuah topik, dimainkan satu per satu.
+- **Papan Peringkat** — poin dari kuis & cek jawaban, dengan podium berkarakter.
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+## Stack
 
-## Quick Start
-
-```bash [Terminal]
-npm create nuxt@latest -- -t ui
-```
-
-## Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
+- [Nuxt 4](https://nuxt.com) · [Nuxt UI](https://ui.nuxt.com) · TypeScript · Tailwind CSS
+- [Neon](https://neon.tech) Postgres + [Drizzle ORM](https://orm.drizzle.team)
+- [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils) — Google OAuth (SSO)
+- Google **Gemini** untuk AI (fallback ke **Groq** saat limit)
+- Deploy di [Vercel](https://vercel.com)
 
 ## Setup
 
-Make sure to install the dependencies:
-
 ```bash
 pnpm install
+cp .env.example .env      # isi kredensial (lihat di bawah)
+pnpm db:push              # buat tabel di database
+pnpm dev                  # http://localhost:3000
 ```
 
-## Development Server
+### Environment
 
-Start the development server on `http://localhost:3000`:
+```
+GEMINI_API_KEY=                 # wajib — Google AI Studio
+GROQ_API_KEY=                   # opsional — fallback saat Gemini limit
+DATABASE_URL=                   # Neon connection string (pooled)
+NUXT_OAUTH_GOOGLE_CLIENT_ID=    # Google Cloud → OAuth client (Web)
+NUXT_OAUTH_GOOGLE_CLIENT_SECRET=
+NUXT_SESSION_PASSWORD=          # teks acak min. 32 karakter
+```
+
+Authorized redirect URI di Google OAuth: `http://localhost:3000/auth/google` (dev) dan `https://<domain>/auth/google` (produksi).
+
+## Deploy (Vercel)
+
+1. Import repo — Nuxt terdeteksi otomatis.
+2. Set semua environment variable di atas.
+3. Tambahkan redirect URI produksi di Google OAuth.
 
 ```bash
-pnpm dev
+pnpm build      # build produksi
+pnpm preview    # preview lokal
 ```
-
-## Production
-
-Build the application for production:
-
-```bash
-pnpm build
-```
-
-Locally preview production build:
-
-```bash
-pnpm preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
-
-## Renovate integration
-
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.

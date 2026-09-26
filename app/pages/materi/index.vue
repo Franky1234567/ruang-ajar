@@ -49,6 +49,66 @@ function onFile(e: Event) {
   file.value = (e.target as HTMLInputElement).files?.[0] ?? null
 }
 
+// ── Generate massal dari PDF (auto pecah per topik) ──
+interface BulkTopic { topic: string, notes: string, status: 'pending' | 'done' | 'error' }
+const bulkFile = ref<File | null>(null)
+const bulkTopics = ref<BulkTopic[]>([])
+const bulkPhase = ref<'idle' | 'detecting' | 'generating' | 'done'>('idle')
+const bulkCurrent = ref(0)
+
+function onBulkFile(e: Event) {
+  bulkFile.value = (e.target as HTMLInputElement).files?.[0] ?? null
+}
+
+async function bulkGenerate() {
+  if (!bulkFile.value) {
+    toast.add({ title: 'Upload PDF-nya dulu.', color: 'error' })
+    return
+  }
+  bulkPhase.value = 'detecting'
+  bulkTopics.value = []
+  bulkCurrent.value = 0
+  try {
+    const fd = new FormData()
+    fd.append('file', bulkFile.value)
+    if (settings.value.apiKey) fd.append('apiKey', settings.value.apiKey)
+    if (settings.value.model) fd.append('model', settings.value.model)
+    const found = await $fetch<{ topic: string, notes: string }[]>('/api/material/outline', { method: 'POST', body: fd })
+    bulkTopics.value = found.map(t => ({ ...t, status: 'pending' as const }))
+
+    bulkPhase.value = 'generating'
+    for (let i = 0; i < bulkTopics.value.length; i++) {
+      bulkCurrent.value = i + 1
+      const t = bulkTopics.value[i]
+      try {
+        const fd2 = new FormData()
+        fd2.append('topic', t.topic)
+        fd2.append('klass', form.klass)
+        fd2.append('reference', t.notes || '')
+        if (settings.value.apiKey) fd2.append('apiKey', settings.value.apiKey)
+        if (settings.value.model) fd2.append('model', settings.value.model)
+        const mat = await $fetch<typeof draft>('/api/material', { method: 'POST', body: fd2 })
+        await add({
+          date: form.date, klass: form.klass, topic: t.topic, goal: '',
+          title: mat.title, explanation: mat.explanation, pattern: mat.pattern,
+          examples: mat.examples, exercises: mat.exercises, answerKey: mat.answerKey
+        })
+        t.status = 'done'
+      } catch {
+        t.status = 'error'
+      }
+    }
+    bulkPhase.value = 'done'
+    const ok = bulkTopics.value.filter(t => t.status === 'done').length
+    toast.add({ title: `Selesai! ${ok} materi tersimpan.`, color: 'success' })
+    bulkFile.value = null
+  } catch (e) {
+    bulkPhase.value = 'idle'
+    const err = e as { data?: { statusMessage?: string }, message?: string }
+    toast.add({ title: 'Gagal baca PDF', description: err.data?.statusMessage || err.message, color: 'error' })
+  }
+}
+
 async function generate() {
   if (!form.topic.trim()) {
     toast.add({ title: 'Isi topiknya dulu.', color: 'error' })
@@ -149,6 +209,41 @@ onMounted(async () => {
     <p class="subhead">
       Tulis topik dan tempel contoh. Drafnya bisa langsung kamu edit.
     </p>
+
+    <div class="banner-yellow" style="display:block">
+      <strong>Punya PDF materi/kisi-kisi banyak topik?</strong>
+      Upload sekali, AI pecah tiap topik jadi materi terpisah.
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
+        <input type="file" accept="image/*,application/pdf" class="input" style="max-width:280px" :disabled="bulkPhase === 'detecting' || bulkPhase === 'generating'" @change="onBulkFile">
+        <button
+          class="button dark"
+          style="flex:none"
+          :disabled="!bulkFile || bulkPhase === 'detecting' || bulkPhase === 'generating'"
+          @click="bulkGenerate"
+        >
+          <template v-if="bulkPhase === 'detecting'">
+            Membaca PDF…
+          </template>
+          <template v-else-if="bulkPhase === 'generating'">
+            Membuat {{ bulkCurrent }}/{{ bulkTopics.length }}…
+          </template>
+          <template v-else>
+            ✦ Deteksi topik &amp; buat semua
+          </template>
+        </button>
+      </div>
+
+      <div v-if="bulkTopics.length" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:7px">
+        <span
+          v-for="(t, i) in bulkTopics"
+          :key="i"
+          class="inline-chip"
+          :style="t.status === 'done' ? 'background:#d9f5d9' : t.status === 'error' ? 'background:#fde0e0' : bulkCurrent === i + 1 ? 'background:#fff2aa' : ''"
+        >
+          {{ t.status === 'done' ? '✓' : t.status === 'error' ? '✕' : bulkCurrent === i + 1 ? '⋯' : '•' }} {{ t.topic }}
+        </span>
+      </div>
+    </div>
 
     <div class="desktop-grid">
       <div class="card">

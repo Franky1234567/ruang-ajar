@@ -46,6 +46,16 @@ export function buildMaterialPrompt(req: MaterialRequest): string {
   return parts.join('\n\n')
 }
 
+// Baca dokumen (materi/kisi-kisi) → daftar topik + poin isi tiap topik.
+export function buildOutlinePrompt(): string {
+  return [
+    'Ini dokumen materi atau kisi-kisi pelajaran (bisa hasil scan). Baca isinya.',
+    'Daftar SEMUA topik / pokok bahasan yang ada, ikuti penomoran & urutan di dokumen. Jangan lewatkan satu pun.',
+    'Untuk tiap topik isi "topic" = nama topiknya, dan "notes" = poin penting / ringkasan isi dokumen untuk topik itu '
+    + '(kalau dokumen cuma memuat judul topik tanpa isi, notes boleh singkat atau kosong).'
+  ].join('\n\n')
+}
+
 // Periksa jawaban murid vs kunci guru. Beri feedback membangun + poin 0-10.
 export function buildCheckPrompt(req: CheckRequest): string {
   return [
