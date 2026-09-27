@@ -3,25 +3,35 @@ export interface MaterialRequest {
   klass?: string
   goal?: string
   reference?: string
+  focus?: string
 }
 
 export interface CheckRequest {
   question: string
   key: string
   answer: string
+  focus?: string
 }
 
 export interface QuizRequest {
   topic: string
   count: number
   reference?: string
+  focus?: string
+}
+
+// Baris peran guru; kalau ada fokus mapel, AI dikunci ke mapel itu.
+function role(focus?: string, tail = ''): string {
+  const f = focus?.trim()
+  return f
+    ? `Kamu guru mata pelajaran ${f}. Semua materi/soal HARUS untuk mapel ${f}${tail ? ' ' + tail : ''}.`
+    : `Kamu guru${tail ? ' ' + tail : ''}. Sesuaikan dengan mata pelajaran yang tersirat dari topik/materi.`
 }
 
 // Susun draf materi LENGKAP. Kalau ada referensi, materi digrounding ke situ (bukan halu AI).
 export function buildMaterialPrompt(req: MaterialRequest): string {
   const parts = [
-    'Kamu guru yang menyusun materi ajar LENGKAP, jelas, dan mudah dipahami murid. '
-    + 'Sesuaikan dengan mata pelajaran yang tersirat dari topik (mis. Bahasa Inggris, Matematika, Bahasa Arab, IPA, dll).',
+    role(req.focus, 'yang menyusun materi ajar LENGKAP, jelas, dan mudah dipahami murid.'),
     `Topik: ${req.topic}.`
   ]
   if (req.klass?.trim()) parts.push(`Kelas/level: ${req.klass.trim()}. Sesuaikan kedalaman & kesulitan dengan level ini.`)
@@ -46,6 +56,25 @@ export function buildMaterialPrompt(req: MaterialRequest): string {
   return parts.join('\n\n')
 }
 
+export interface VocabRequest {
+  theme: string
+  count: number
+  klass?: string
+  focus?: string
+}
+
+// Generate kosakata by tema.
+export function buildVocabPrompt(req: VocabRequest): string {
+  const parts = [
+    `${role(req.focus)} Buatkan ${req.count} kosakata (vocabulary) untuk tema: ${req.theme}.`,
+    'Tiap entri: "word" = kata/frasa target, "meaning" = arti singkat Bahasa Indonesia, '
+    + '"example" = 1 contoh kalimat sederhana pakai kata itu + artinya.'
+  ]
+  if (req.klass?.trim()) parts.push(`Level: ${req.klass.trim()}. Pilih kata yang sesuai & sering dipakai di level ini.`)
+  parts.push('Pilih kata yang umum & berguna (bukan langka). Kalau mapelnya bahasa asing, "word" dalam bahasa itu.')
+  return parts.join('\n\n')
+}
+
 // Baca dokumen (materi/kisi-kisi) → daftar topik + poin isi tiap topik.
 export function buildOutlinePrompt(): string {
   return [
@@ -59,7 +88,7 @@ export function buildOutlinePrompt(): string {
 // Periksa jawaban murid vs kunci guru. Beri feedback membangun + poin 0-10.
 export function buildCheckPrompt(req: CheckRequest): string {
   return [
-    'Kamu guru yang memeriksa jawaban murid dengan sabar (mapel apa pun, sesuaikan dari soal).',
+    role(req.focus, 'yang memeriksa jawaban murid dengan sabar.'),
     `Soal: ${req.question}`,
     `Kunci / poin penting dari guru: ${req.key}`,
     `Jawaban murid: ${req.answer}`,
@@ -75,12 +104,13 @@ export interface ExamRequest {
   count: number
   klass?: string
   examples?: string[]
+  focus?: string
 }
 
 // Generate soal ujian dari materi yang diajarkan; gaya ditiru dari contoh bank.
 export function buildExamPrompt(req: ExamRequest): string {
   const parts = [
-    `Kamu guru. Buat ${req.count} soal ujian sesuai mata pelajaran dari materi di bawah.`,
+    `${role(req.focus)} Buat ${req.count} soal ujian dari materi di bawah.`,
     `MATERI yang diujikan (isi soal harus tentang ini):\n- ${req.materials.join('\n- ')}`,
     `Sebar tipe soal ini secara berimbang: ${req.types.join(', ')}. Field "type" tiap soal WAJIB persis salah satu label itu (jangan diterjemahkan). Tiap soal wajib punya kunci jawaban.`
   ]
@@ -101,7 +131,7 @@ export function buildExamPrompt(req: ExamRequest): string {
 // Generate soal pilihan ganda buat kuis.
 export function buildQuizPrompt(req: QuizRequest): string {
   const parts = [
-    `Kamu guru. Buat ${req.count} soal pilihan ganda (4 opsi) tentang: ${req.topic} (mapel menyesuaikan topik).`,
+    `${role(req.focus)} Buat ${req.count} soal pilihan ganda (4 opsi) tentang: ${req.topic}.`,
     'Tiap soal: 1 jawaban benar, 3 pengecoh masuk akal, dan alasan singkat kenapa jawabannya benar.',
     'Level murid — sederhana, jelas, mudah dipahami.'
   ]

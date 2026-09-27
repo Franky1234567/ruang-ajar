@@ -33,7 +33,8 @@ export default defineEventHandler(async (event) => {
     types: body.types,
     count: body.count || 8,
     klass: body.klass,
-    examples: body.examples ?? []
+    examples: body.examples ?? [],
+    focus: body.focus
   })
   return geminiJson<{ type: string, text: string, answer: string }[]>(event, key, model, prompt, SCHEMA)
 })

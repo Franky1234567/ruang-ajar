@@ -55,6 +55,7 @@ async function generate(replaceIndex: number | null = null) {
         count: replaceIndex === null ? count.value : 1,
         klass: klass.value,
         examples: examplesForTypes(),
+        focus: settings.value.focus || undefined,
         apiKey: settings.value.apiKey || undefined,
         model: settings.value.model || undefined
       }

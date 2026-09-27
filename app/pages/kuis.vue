@@ -30,6 +30,7 @@ async function start() {
       body: {
         topic: form.topic,
         count: form.count,
+        focus: settings.value.focus || undefined,
         apiKey: settings.value.apiKey || undefined,
         model: settings.value.model || undefined
       }

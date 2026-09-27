@@ -23,6 +23,7 @@ async function check() {
         question: form.question,
         key: form.key,
         answer: form.answer,
+        focus: settings.value.focus || undefined,
         apiKey: settings.value.apiKey || undefined,
         model: settings.value.model || undefined
       }

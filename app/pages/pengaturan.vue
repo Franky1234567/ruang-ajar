@@ -19,6 +19,13 @@ const settings = useSettings()
     <div class="desktop-grid">
       <div class="card">
         <div class="field">
+          <label class="form-label" for="focus">Mata pelajaran / fokus ngajar</label>
+          <input id="focus" v-model="settings.focus" class="input" placeholder="mis. Bahasa Inggris MI kelas 3">
+          <p class="hint">
+            Biar AI fokus ke mapel ini, nggak nebak dari topik. Kosongin = umum.
+          </p>
+        </div>
+        <div class="field">
           <label class="form-label" for="defaultClass">Kelas / level default</label>
           <input id="defaultClass" v-model="settings.defaultClass" class="input" placeholder="mis. SMP kelas 8">
           <p class="hint">

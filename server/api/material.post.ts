@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
   const reference = file
     ? `${fields.reference ?? ''}\n(Referensi utama ada di file terlampir — baca isinya sebagai acuan materi.)`.trim()
     : fields.reference
-  const prompt = buildMaterialPrompt({ topic: fields.topic, klass: fields.klass, goal: fields.goal, reference })
+  const prompt = buildMaterialPrompt({ topic: fields.topic, klass: fields.klass, goal: fields.goal, reference, focus: fields.focus })
 
   if (file) return geminiVisionJson(key, model, prompt, SCHEMA, file)
   return geminiJson(event, key, model, prompt, SCHEMA)

@@ -27,10 +27,21 @@ export interface Rank {
   activities: number
 }
 
+export interface Vocab {
+  id: string
+  word: string
+  meaning: string
+  example: string
+  theme: string
+  klass: string
+  learned: boolean
+}
+
 export interface Settings {
   apiKey: string
   model: string
   defaultClass: string
+  focus: string
 }
 
 function usePersistentState<T>(key: string, initial: () => T) {
@@ -182,8 +193,44 @@ export function usePatterns() {
 
   return { items, loaded, load, addMany, update, remove, legacyCount, importLegacy }
 }
+type VocabInput = { word: string, meaning: string, example: string, theme: string, klass: string }
+
+export function useVocab() {
+  const items = useState<Vocab[]>('vocab', () => [])
+  const loaded = useState<boolean>('vocab_loaded', () => false)
+
+  async function load(force = false) {
+    if (loaded.value && !force) return
+    try {
+      items.value = await $fetch<Vocab[]>('/api/vocab')
+      loaded.value = true
+    } catch {
+      // belum login → kosong
+    }
+  }
+
+  async function addMany(inputs: VocabInput[]) {
+    const rows = await $fetch<Vocab[]>('/api/vocab', { method: 'POST', body: inputs })
+    items.value.unshift(...rows)
+    return rows
+  }
+
+  async function toggleLearned(v: Vocab) {
+    const row = await $fetch<Vocab>(`/api/vocab/${v.id}`, { method: 'PATCH', body: { learned: !v.learned } })
+    const i = items.value.findIndex(x => x.id === v.id)
+    if (i >= 0) items.value[i] = row
+  }
+
+  async function remove(id: string) {
+    await $fetch(`/api/vocab/${id}`, { method: 'DELETE' })
+    items.value = items.value.filter(v => v.id !== id)
+  }
+
+  return { items, loaded, load, addMany, toggleLearned, remove }
+}
+
 export const useSettings = () =>
-  usePersistentState<Settings>('settings', () => ({ apiKey: '', model: 'gemini-flash-lite-latest', defaultClass: 'SMP kelas 8' }))
+  usePersistentState<Settings>('settings', () => ({ apiKey: '', model: 'gemini-flash-lite-latest', defaultClass: 'SMP kelas 8', focus: '' }))
 
 // Kelas default global — dipakai buat prefill form; editable per-form.
 export function useDefaultClass() {

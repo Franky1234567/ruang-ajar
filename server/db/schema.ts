@@ -1,4 +1,4 @@
-import { integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { boolean, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -41,6 +41,18 @@ export const ranks = pgTable('ranks', {
   className: text('class_name').default('Umum'),
   points: integer('points').default(0).notNull(),
   activities: integer('activities').default(0).notNull()
+})
+
+export const vocab = pgTable('vocab', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  word: text('word').notNull(),
+  meaning: text('meaning').default(''),
+  example: text('example').default(''),
+  theme: text('theme').default(''),
+  klass: text('klass').default(''),
+  learned: boolean('learned').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
 })
 
 export const settings = pgTable('settings', {

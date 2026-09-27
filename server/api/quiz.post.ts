@@ -26,6 +26,6 @@ export default defineEventHandler(async (event) => {
   }
   const key = resolveKey(event, body.apiKey)
   const model = body.model?.trim() || 'gemini-flash-lite-latest'
-  const prompt = buildQuizPrompt({ topic: body.topic, count: body.count || 3, reference: body.reference })
+  const prompt = buildQuizPrompt({ topic: body.topic, count: body.count || 3, reference: body.reference, focus: body.focus })
   return geminiJson<{ q: string, options: string[], answer: number, why: string }[]>(event, key, model, prompt, SCHEMA)
 })
