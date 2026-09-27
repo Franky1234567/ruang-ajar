@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { VOCAB_TYPES } from '~/constants/questions'
+
 const { items, load, addMany, toggleLearned, remove } = useVocab()
 const settings = useSettings()
 const toast = useToast()
 
 const theme = ref('')
 const count = ref(15)
+const type = ref<'kata' | 'idiom' | 'slang'>('kata')
 const klass = ref('SMP kelas 8')
 const loading = ref(false)
 const preview = ref<{ word: string, meaning: string, example: string }[]>([])
@@ -28,6 +31,7 @@ async function generate() {
       body: {
         theme: theme.value,
         count: count.value,
+        type: type.value,
         klass: klass.value,
         focus: settings.value.focus || undefined,
         apiKey: settings.value.apiKey || undefined,
@@ -46,7 +50,7 @@ async function saveAll() {
   if (!preview.value.length) return
   saving.value = true
   try {
-    await addMany(preview.value.map(v => ({ ...v, theme: theme.value.trim(), klass: klass.value })))
+    await addMany(preview.value.map(v => ({ ...v, type: type.value, theme: theme.value.trim(), klass: klass.value })))
     toast.add({ title: `${preview.value.length} vocab tersimpan.`, color: 'success' })
     preview.value = []
     theme.value = ''
@@ -74,9 +78,19 @@ async function removeItem(id: string) {
 }
 
 const filter = ref<'all' | 'no' | 'yes'>('all')
-const shown = computed(() =>
-  items.value.filter(v => filter.value === 'all' || (filter.value === 'yes') === v.learned)
-)
+const themeFilter = ref('')
+const klassFilter = ref('')
+const typeFilter = ref('')
+
+const themes = computed(() => [...new Set(items.value.map(v => v.theme).filter(Boolean))])
+const klasses = computed(() => [...new Set(items.value.map(v => v.klass).filter(Boolean))])
+
+const shown = computed(() => items.value.filter(v =>
+  (filter.value === 'all' || (filter.value === 'yes') === v.learned)
+  && (!themeFilter.value || v.theme === themeFilter.value)
+  && (!klassFilter.value || v.klass === klassFilter.value)
+  && (!typeFilter.value || v.type === typeFilter.value)
+))
 const learnedCount = computed(() => items.value.filter(v => v.learned).length)
 </script>
 
@@ -108,9 +122,19 @@ const learnedCount = computed(() => items.value.filter(v => v.learned).length)
             <input id="vcount" v-model.number="count" class="input" type="number" min="1" max="40">
           </div>
         </div>
-        <div class="field">
-          <label class="form-label" for="vclass">Kelas / level</label>
-          <input id="vclass" v-model="klass" class="input" placeholder="mis. MI kelas 3">
+        <div class="row">
+          <div class="field">
+            <label class="form-label" for="vtype">Tipe</label>
+            <select id="vtype" v-model="type" class="select">
+              <option v-for="t in VOCAB_TYPES" :key="t.value" :value="t.value">
+                {{ t.label }}
+              </option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="form-label" for="vclass">Kelas / level</label>
+            <input id="vclass" v-model="klass" class="input" placeholder="mis. MI kelas 3">
+          </div>
         </div>
         <button class="button dark full" :disabled="loading" @click="generate">
           {{ loading ? 'Membuat…' : '✦ Generate vocab' }}
@@ -147,6 +171,32 @@ const learnedCount = computed(() => items.value.filter(v => v.learned).length)
             Hafal
           </button>
         </div>
+        <div v-if="items.length" style="display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap">
+          <select v-model="themeFilter" class="select" style="min-height:34px;flex:1;min-width:120px">
+            <option value="">
+              Semua tema
+            </option>
+            <option v-for="t in themes" :key="t" :value="t">
+              {{ t }}
+            </option>
+          </select>
+          <select v-model="klassFilter" class="select" style="min-height:34px;flex:1;min-width:120px">
+            <option value="">
+              Semua kelas
+            </option>
+            <option v-for="k in klasses" :key="k" :value="k">
+              {{ k }}
+            </option>
+          </select>
+          <select v-model="typeFilter" class="select" style="min-height:34px;flex:1;min-width:110px">
+            <option value="">
+              Semua tipe
+            </option>
+            <option v-for="t in VOCAB_TYPES" :key="t.value" :value="t.value">
+              {{ t.label }}
+            </option>
+          </select>
+        </div>
 
         <p v-if="!items.length" class="empty">
           Belum ada vocab. Generate di sebelah.
@@ -160,6 +210,7 @@ const learnedCount = computed(() => items.value.filter(v => v.learned).length)
                 <p v-if="v.example" style="font-size:12px;color:#77857f;margin:4px 0 0">
                   {{ v.example }}
                 </p>
+                <span v-if="v.type && v.type !== 'kata'" style="font-size:10px;color:#b8860b;font-weight:800;text-transform:uppercase;margin-right:6px">{{ v.type }}</span>
                 <span v-if="v.theme" style="font-size:10px;color:#999">#{{ v.theme }}</span>
               </div>
               <div style="display:flex;flex-direction:column;gap:5px;flex:none;align-items:end">

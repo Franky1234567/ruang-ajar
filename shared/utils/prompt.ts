@@ -56,22 +56,34 @@ export function buildMaterialPrompt(req: MaterialRequest): string {
   return parts.join('\n\n')
 }
 
+export type VocabType = 'kata' | 'idiom' | 'slang'
+
 export interface VocabRequest {
   theme: string
   count: number
+  type?: VocabType
   klass?: string
   focus?: string
 }
 
-// Generate kosakata by tema.
+const VOCAB_SPEC: Record<VocabType, string> = {
+  kata: 'kosakata (vocabulary)',
+  idiom: 'idiom / ungkapan (frasa yang maknanya kiasan, bukan arti harfiah)',
+  slang: 'bahasa gaul / slang (informal, sehari-hari)'
+}
+
+// Generate kosakata / idiom / slang by tema.
 export function buildVocabPrompt(req: VocabRequest): string {
+  const type = req.type ?? 'kata'
   const parts = [
-    `${role(req.focus)} Buatkan ${req.count} kosakata (vocabulary) untuk tema: ${req.theme}.`,
+    `${role(req.focus)} Buatkan ${req.count} ${VOCAB_SPEC[type]} untuk tema: ${req.theme}.`,
     'Tiap entri: "word" = kata/frasa target, "meaning" = arti singkat Bahasa Indonesia, '
     + '"example" = 1 contoh kalimat sederhana pakai kata itu + artinya.'
   ]
-  if (req.klass?.trim()) parts.push(`Level: ${req.klass.trim()}. Pilih kata yang sesuai & sering dipakai di level ini.`)
-  parts.push('Pilih kata yang umum & berguna (bukan langka). Kalau mapelnya bahasa asing, "word" dalam bahasa itu.')
+  if (type === 'idiom') parts.push('Pilih idiom yang maknanya TIDAK harfiah. "meaning" jelaskan makna kiasannya.')
+  if (type === 'slang') parts.push('Pilih slang yang lazim & sopan (hindari yang kasar/vulgar). "meaning" sertakan nuansa informalnya.')
+  if (req.klass?.trim()) parts.push(`Level: ${req.klass.trim()}. Pilih yang sesuai & sering dipakai di level ini.`)
+  parts.push('Pilih yang umum & berguna (bukan langka). Kalau mapelnya bahasa asing, "word" dalam bahasa itu.')
   return parts.join('\n\n')
 }
 

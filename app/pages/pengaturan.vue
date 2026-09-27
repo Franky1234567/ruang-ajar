@@ -2,6 +2,18 @@
 import { GEMINI_MODELS } from '~/constants/questions'
 
 const settings = useSettings()
+
+// Auto-save jalan lewat usePersistentState; ini cuma feedback visual "baru disimpan".
+const justSaved = ref(false)
+let armed = false
+let timer: ReturnType<typeof setTimeout>
+onMounted(() => nextTick(() => { armed = true }))
+watch(settings, () => {
+  if (!armed) return
+  justSaved.value = true
+  clearTimeout(timer)
+  timer = setTimeout(() => { justSaved.value = false }, 1500)
+}, { deep: true })
 </script>
 
 <template>
@@ -13,7 +25,9 @@ const settings = useSettings()
       Pengaturan
     </h1>
     <p class="subhead">
-      Kunci AI buat susun materi, cek jawaban, dan kuis. Disimpan di browser ini saja.
+      Kunci AI buat susun materi, cek jawaban, dan kuis.
+      <span style="color:#3a7a3a;font-weight:700">Tersimpan otomatis di browser ini</span>
+      <span v-if="justSaved" style="color:#3a7a3a;font-weight:800">· ✓ baru disimpan</span>
     </p>
 
     <div class="desktop-grid">

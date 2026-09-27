@@ -46,6 +46,7 @@ export const ranks = pgTable('ranks', {
 export const vocab = pgTable('vocab', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type').default('kata').notNull(),
   word: text('word').notNull(),
   meaning: text('meaning').default(''),
   example: text('example').default(''),

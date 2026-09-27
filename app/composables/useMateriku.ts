@@ -32,6 +32,7 @@ export interface Vocab {
   word: string
   meaning: string
   example: string
+  type: string
   theme: string
   klass: string
   learned: boolean
@@ -193,7 +194,7 @@ export function usePatterns() {
 
   return { items, loaded, load, addMany, update, remove, legacyCount, importLegacy }
 }
-type VocabInput = { word: string, meaning: string, example: string, theme: string, klass: string }
+type VocabInput = { word: string, meaning: string, example: string, type: string, theme: string, klass: string }
 
 export function useVocab() {
   const items = useState<Vocab[]>('vocab', () => [])

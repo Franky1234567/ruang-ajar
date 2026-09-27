@@ -7,6 +7,12 @@ export const QUESTION_TYPES = [
   'Essay'
 ] as const
 
+export const VOCAB_TYPES = [
+  { value: 'kata', label: 'Kata' },
+  { value: 'idiom', label: 'Idiom' },
+  { value: 'slang', label: 'Slang' }
+] as const
+
 export const GEMINI_MODELS = [
   'gemini-flash-lite-latest',
   'gemini-flash-latest',

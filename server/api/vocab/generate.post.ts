@@ -25,6 +25,6 @@ export default defineEventHandler(async (event) => {
 
   const key = resolveKey(event, body.apiKey)
   const model = body.model?.trim() || 'gemini-flash-lite-latest'
-  const prompt = buildVocabPrompt({ theme: body.theme, count: body.count || 10, klass: body.klass, focus: body.focus })
+  const prompt = buildVocabPrompt({ theme: body.theme, count: body.count || 10, type: body.type, klass: body.klass, focus: body.focus })
   return geminiJson<{ word: string, meaning: string, example: string }[]>(event, key, model, prompt, SCHEMA)
 })

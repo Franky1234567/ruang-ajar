@@ -1,6 +1,6 @@
 import { schema, useDb } from '~~/server/db'
 
-interface VocabInput { word?: string, meaning?: string, example?: string, theme?: string, klass?: string }
+interface VocabInput { word?: string, meaning?: string, example?: string, type?: string, theme?: string, klass?: string }
 
 // Simpan banyak vocab sekaligus (hasil generate).
 export default defineEventHandler(async (event) => {
@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
       word: v.word!.trim(),
       meaning: v.meaning ?? '',
       example: v.example ?? '',
+      type: v.type ?? 'kata',
       theme: v.theme ?? '',
       klass: v.klass ?? ''
     }))
