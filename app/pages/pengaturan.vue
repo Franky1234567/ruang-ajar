@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { GEMINI_MODELS } from '~/constants/questions'
-
 const settings = useSettings()
+const { data: usage } = await useFetch('/api/usage')
 
 // Auto-save jalan lewat usePersistentState; ini cuma feedback visual "baru disimpan".
 const justSaved = ref(false)
@@ -25,48 +24,47 @@ watch(settings, () => {
       Pengaturan
     </h1>
     <p class="subhead">
-      Kunci AI buat susun materi, cek jawaban, dan kuis.
-      <span style="color:#3a7a3a;font-weight:700">Tersimpan otomatis di browser ini</span>
-      <span v-if="justSaved" style="color:#3a7a3a;font-weight:800">· ✓ baru disimpan</span>
+      Biar AI nyesuain sama mapel dan kelasmu.
+      <span style="color:var(--primary-hover);font-weight:700">Tersimpan otomatis di browser ini</span>
+      <span v-if="justSaved" style="color:var(--primary-hover);font-weight:800">· ✓ baru disimpan</span>
     </p>
 
     <div class="desktop-grid">
       <div class="card">
         <div class="field">
           <label class="form-label" for="focus">Mata pelajaran / fokus ngajar</label>
-          <input id="focus" v-model="settings.focus" class="input" placeholder="mis. Bahasa Inggris MI kelas 3">
+          <input id="focus" v-model="settings.focus" class="input" list="subject-list" placeholder="Pilih atau ketik, mis. Fikih">
+          <datalist id="subject-list">
+            <option v-for="s in [...MADRASAH_SUBJECTS, ...GENERAL_SUBJECTS]" :key="s" :value="s" />
+          </datalist>
           <p class="hint">
             Biar AI fokus ke mapel ini, nggak nebak dari topik. Kosongin = umum.
           </p>
+        </div>
+        <div v-if="isMadrasahSubject(settings.focus)" class="banner-yellow">
+          <strong>Mode madrasah aktif</strong>
+          AI nulis ayat, hadis, dan doa pakai huruf Arab berharakat + terjemahan, lengkap dengan surah:ayat dan perawi.
+          Tetap cek ulang dalilnya sebelum dibagikan ke murid.
         </div>
         <div class="field">
           <label class="form-label" for="defaultClass">Kelas / level default</label>
           <input id="defaultClass" v-model="settings.defaultClass" class="input" placeholder="mis. SMP kelas 8">
           <p class="hint">
-            Dipakai otomatis di form Materi, Cek, Kuis, Ujian — biar nggak ketik ulang.
+            Dipakai otomatis di form Materi, Kuis, Ujian — biar nggak ketik ulang.
           </p>
-        </div>
-        <div class="field">
-          <label class="form-label" for="apiKey">Gemini API Key</label>
-          <input id="apiKey" v-model="settings.apiKey" class="input" type="password" placeholder="AQ.…">
-          <p class="hint">
-            Kosongkan kalau server sudah punya key (env GEMINI_API_KEY).
-          </p>
-        </div>
-        <div class="field">
-          <label class="form-label" for="model">Model</label>
-          <select id="model" v-model="settings.model" class="select">
-            <option v-for="m in GEMINI_MODELS" :key="m">
-              {{ m }}
-            </option>
-          </select>
         </div>
       </div>
 
       <div class="right-panel">
-        <div class="small-banner">
-          <strong>Cara dapat key:</strong> gratis di Google AI Studio (aistudio.google.com) → Get API key. Key cuma dipakai dari sisi server saat generate.
+        <div v-if="usage" class="small-banner">
+          <strong>Kuota AI bulan ini:</strong> {{ usage.used }} / {{ usage.limit }} terpakai.
+          Sisa {{ Math.max(usage.limit - usage.used, 0) }}x. Reset tiap awal bulan.
         </div>
+        <NuxtLink to="/madrasah" class="feature-tile">
+          <span class="tile-icon cyan"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10l7-5 7 5v11M10 21v-5h4v5M12 5V2" /></svg></span>
+          <span><strong>Madrasah</strong><small>Gabung atau daftarkan madrasahmu</small></span>
+          <span class="arrow">↗</span>
+        </NuxtLink>
       </div>
     </div>
   </div>

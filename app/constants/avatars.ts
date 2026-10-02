@@ -6,9 +6,13 @@ export const AVATARS = [
   'kopiah-06', 'kopiah-07', 'kopiah-08', 'kopiah-09', 'kopiah-10'
 ]
 
-// Pilih karakter tetap per nama murid (deterministik).
-export function avatarFor(name: string): string {
+// Pilih karakter tetap per nama murid (deterministik). Kalau L/P diketahui dari daftar siswa,
+// pilihnya cuma dari kopiah (L) atau kerudung (P).
+export function avatarFor(name: string, gender?: string | null): string {
+  const pool = gender === 'P'
+    ? AVATARS.filter(a => a.startsWith('kerudung'))
+    : gender === 'L' ? AVATARS.filter(a => a.startsWith('kopiah')) : AVATARS
   let h = 0
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
-  return `/avatars/${AVATARS[h % AVATARS.length]}.webp`
+  return `/avatars/${pool[h % pool.length]}.webp`
 }

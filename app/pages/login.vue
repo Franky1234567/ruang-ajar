@@ -8,10 +8,10 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div style="min-height:100vh;display:grid;place-items:center;background:var(--bg);padding:24px">
-    <div class="card" style="max-width:380px;text-align:center;box-shadow:4px 4px 0 #1b1b1b">
-      <div class="brand" style="color:#171717;font-size:30px;margin-bottom:6px">
-        ruang<i style="color:#d6a800">ajar.</i>
+  <div style="min-height:100dvh;display:grid;place-items:center;background:var(--bg);padding:24px">
+    <div class="card" style="max-width:400px;width:100%;text-align:center;padding:32px">
+      <div class="brand" style="font-size:30px;margin-bottom:6px">
+        ruang<i>ajar.</i>
       </div>
       <p class="subhead" style="margin-bottom:22px">
         Masuk buat mulai nyiapin materi & nemenin murid latihan.

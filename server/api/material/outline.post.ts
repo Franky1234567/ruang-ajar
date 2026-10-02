@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   }
   if (!file) throw createError({ statusCode: 400, statusMessage: 'Upload PDF/foto dulu.' })
 
-  const key = resolveKey(event, fields.apiKey)
-  const model = fields.model?.trim() || 'gemini-flash-lite-latest'
+  const key = await resolveKey(event)
+  const model = useRuntimeConfig(event).geminiModel
   return geminiVisionJson<{ topic: string, notes: string }[]>(key, model, buildOutlinePrompt(), SCHEMA, file)
 })

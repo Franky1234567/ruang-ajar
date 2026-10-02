@@ -1,4 +1,14 @@
-import { boolean, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { boolean, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import type { ExamQuestion } from '../../shared/utils/exam'
+
+export const schools = pgTable('schools', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: text('name').notNull(),
+  code: text('code').unique().notNull(),
+  // paket berbayar aktif sampai tanggal ini; null/lewat = gratis
+  planUntil: timestamp('plan_until'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+})
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -6,8 +16,45 @@ export const users = pgTable('users', {
   email: text('email').notNull(),
   name: text('name'),
   picture: text('picture'),
+  schoolId: uuid('school_id').references(() => schools.id, { onDelete: 'set null' }),
+  role: text('role').default('guru').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull()
 })
+
+// schoolId null = kelas pribadi guru yang belum gabung madrasah.
+export const classes = pgTable('classes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  schoolId: uuid('school_id').references(() => schools.id, { onDelete: 'cascade' }),
+  ownerId: uuid('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+})
+
+export const students = pgTable('students', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  classId: uuid('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
+  nis: text('nis').default('').notNull(),
+  name: text('name').notNull(),
+  gender: text('gender')
+})
+
+// Ujian pribadi guru; classId opsional (ujian les tanpa daftar siswa tetap bisa disimpan & dicetak).
+export const exams = pgTable('exams', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  classId: uuid('class_id').references(() => classes.id, { onDelete: 'set null' }),
+  title: text('title').notNull(),
+  questions: jsonb('questions').$type<ExamQuestion[]>().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+})
+
+export const examScores = pgTable('exam_scores', {
+  examId: uuid('exam_id').notNull().references(() => exams.id, { onDelete: 'cascade' }),
+  studentId: uuid('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  score: integer('score').notNull(),
+  note: text('note').default('').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+}, t => [primaryKey({ columns: [t.examId, t.studentId] })])
 
 export const materials = pgTable('materials', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -55,6 +102,12 @@ export const vocab = pgTable('vocab', {
   learned: boolean('learned').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull()
 })
+
+export const aiUsage = pgTable('ai_usage', {
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  month: text('month').notNull(),
+  count: integer('count').default(0).notNull()
+}, t => [primaryKey({ columns: [t.userId, t.month] })])
 
 export const settings = pgTable('settings', {
   userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),

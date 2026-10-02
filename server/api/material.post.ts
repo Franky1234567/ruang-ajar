@@ -33,8 +33,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Topik belum diisi.' })
   }
 
-  const key = resolveKey(event, fields.apiKey)
-  const model = fields.model?.trim() || 'gemini-flash-lite-latest'
+  const key = await resolveKey(event)
+  const model = useRuntimeConfig(event).geminiModel
   const reference = file
     ? `${fields.reference ?? ''}\n(Referensi utama ada di file terlampir — baca isinya sebagai acuan materi.)`.trim()
     : fields.reference

@@ -1,9 +1,5 @@
+import type { ExamQuestion } from '~~/shared/utils/exam'
 import type { ExamRequest } from '~~/shared/utils/prompt'
-
-interface Body extends ExamRequest {
-  apiKey?: string
-  model?: string
-}
 
 const SCHEMA = {
   type: 'ARRAY',
@@ -12,6 +8,7 @@ const SCHEMA = {
     properties: {
       type: { type: 'STRING' },
       text: { type: 'STRING' },
+      options: { type: 'ARRAY', items: { type: 'STRING' } },
       answer: { type: 'STRING' }
     },
     required: ['type', 'text', 'answer']
@@ -19,15 +16,15 @@ const SCHEMA = {
 }
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<Body>(event)
+  const body = await readBody<ExamRequest>(event)
   if (!body.materials?.length) {
     throw createError({ statusCode: 400, statusMessage: 'Pilih minimal satu materi.' })
   }
   if (!body.types?.length) {
     throw createError({ statusCode: 400, statusMessage: 'Pilih minimal satu tipe soal.' })
   }
-  const key = resolveKey(event, body.apiKey)
-  const model = body.model?.trim() || 'gemini-flash-lite-latest'
+  const key = await resolveKey(event)
+  const model = useRuntimeConfig(event).geminiModel
   const prompt = buildExamPrompt({
     materials: body.materials,
     types: body.types,
@@ -36,5 +33,6 @@ export default defineEventHandler(async (event) => {
     examples: body.examples ?? [],
     focus: body.focus
   })
-  return geminiJson<{ type: string, text: string, answer: string }[]>(event, key, model, prompt, SCHEMA)
+  const res = await geminiJson<(ExamQuestion & { options?: string[] })[]>(event, key, model, prompt, SCHEMA)
+  return res.map(withOptions)
 })

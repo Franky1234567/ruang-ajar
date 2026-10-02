@@ -3,6 +3,7 @@ const route = useRoute()
 const { items, load } = useMaterials()
 onMounted(load)
 const material = computed(() => items.value.find(m => m.id === route.params.id))
+const print = () => window.print()
 
 const SECTIONS = [
   { label: '01 / Tujuan belajar', key: 'goal', highlight: false },
@@ -22,10 +23,10 @@ const SECTIONS = [
       </button>
       <template v-if="material">
         <button @click="() => navigateTo(`/materi?edit=${material!.id}`)">
-          ✎ Edit
+          Edit
         </button>
-        <button @click="() => window.print()">
-          🖨 Cetak/PDF
+        <button @click="print">
+          Cetak/PDF
         </button>
       </template>
     </div>

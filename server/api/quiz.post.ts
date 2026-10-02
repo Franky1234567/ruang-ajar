@@ -1,10 +1,5 @@
 import type { QuizRequest } from '~~/shared/utils/prompt'
 
-interface Body extends QuizRequest {
-  apiKey?: string
-  model?: string
-}
-
 const SCHEMA = {
   type: 'ARRAY',
   items: {
@@ -20,12 +15,12 @@ const SCHEMA = {
 }
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<Body>(event)
+  const body = await readBody<QuizRequest>(event)
   if (!body.topic?.trim()) {
     throw createError({ statusCode: 400, statusMessage: 'Topik belum diisi.' })
   }
-  const key = resolveKey(event, body.apiKey)
-  const model = body.model?.trim() || 'gemini-flash-lite-latest'
+  const key = await resolveKey(event)
+  const model = useRuntimeConfig(event).geminiModel
   const prompt = buildQuizPrompt({ topic: body.topic, count: body.count || 3, reference: body.reference, focus: body.focus })
   return geminiJson<{ q: string, options: string[], answer: number, why: string }[]>(event, key, model, prompt, SCHEMA)
 })

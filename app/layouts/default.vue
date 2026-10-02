@@ -32,11 +32,11 @@ async function logout() {
 
       <div style="display:flex;align-items:center;gap:8px">
         <NuxtLink to="/pengaturan" class="top-action">
-          <span />Pengaturan
+          Pengaturan
         </NuxtLink>
         <template v-if="loggedIn">
-          <img v-if="user?.picture" :src="user.picture" :alt="user?.name || ''" referrerpolicy="no-referrer" style="width:30px;height:30px;border-radius:50%;border:1px solid #5a5a5a">
-          <button class="top-action" style="cursor:pointer" @click="logout">
+          <img v-if="user?.picture" :src="user.picture" :alt="user?.name || ''" referrerpolicy="no-referrer" class="top-avatar">
+          <button class="top-action" @click="logout">
             Keluar
           </button>
         </template>

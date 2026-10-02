@@ -3,6 +3,8 @@ const { items: materials, load } = useMaterials()
 const { items: patterns, load: loadPatterns } = usePatterns()
 const settings = useSettings()
 const toast = useToast()
+const { data: classList } = useFetch<{ id: string, name: string }[]>('/api/classes', { default: () => [] })
+const { data: savedExams } = useFetch<{ id: string, title: string, className: string | null, questionCount: number, scored: number }[]>('/api/exams', { default: () => [] })
 
 const TYPE_OPTS = ['Pilihan Ganda', 'Isian', 'Rewrite/Ubah kalimat', 'Essay']
 
@@ -31,10 +33,6 @@ function examplesForTypes() {
   return (byType.length ? byType : patterns.value).map(p => p.text)
 }
 
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c] as string))
-}
-
 async function generate(replaceIndex: number | null = null) {
   if (!selMats.value.length) {
     toast.add({ title: 'Pilih minimal satu materi.', color: 'error' })
@@ -55,9 +53,7 @@ async function generate(replaceIndex: number | null = null) {
         count: replaceIndex === null ? count.value : 1,
         klass: klass.value,
         examples: examplesForTypes(),
-        focus: settings.value.focus || undefined,
-        apiKey: settings.value.apiKey || undefined,
-        model: settings.value.model || undefined
+        focus: settings.value.focus || undefined
       }
     })
     if (replaceIndex === null) questions.value = res
@@ -83,15 +79,32 @@ async function copy() {
   }
 }
 
-const printHtml = computed(() => {
-  if (!questions.value.length) return ''
-  const head = `<h1>Ujian Bahasa Inggris</h1><p>Nama: ________________   Kelas: ${escapeHtml(klass.value)}</p>`
-  const body = questions.value.map((q, i) => `<article><b>${i + 1}.</b> ${escapeHtml(q.text).replace(/\n/g, '<br>')}</article>`).join('')
-  const keys = showKeys.value
-    ? `<div class="answer-print"><h2>Kunci Jawaban</h2>${questions.value.map((q, i) => `<p>${i + 1}. ${escapeHtml(q.answer)}</p>`).join('')}</div>`
-    : ''
-  return head + body + keys
+const printHtml = computed(() =>
+  examPrintHtml(`Ujian ${settings.value.focus}`.trim(), klass.value, questions.value, showKeys.value))
+const print = () => window.print()
+
+// Simpan → lanjut ke halaman nilai. Judul default dari mapel + materi pertama.
+const saveTitle = ref('')
+const saveClassId = ref('')
+watch(questions, () => {
+  if (!saveTitle.value) saveTitle.value = [settings.value.focus, chosenMaterials()[0]].filter(Boolean).join(' – ')
 })
+const saving = ref(false)
+async function saveExam() {
+  saving.value = true
+  try {
+    const { id } = await $fetch<{ id: string }>('/api/exams', {
+      method: 'POST',
+      body: { title: saveTitle.value, classId: saveClassId.value || null, questions: questions.value }
+    })
+    await navigateTo(`/ujian/${id}`)
+  } catch (e) {
+    const err = e as { data?: { statusMessage?: string } }
+    toast.add({ title: err.data?.statusMessage || 'Gagal menyimpan ujian.', color: 'error' })
+  } finally {
+    saving.value = false
+  }
+}
 </script>
 
 <template>
@@ -148,7 +161,7 @@ const printHtml = computed(() => {
             <strong>{{ patterns.length }} contoh tersimpan.</strong> AI pakai contoh bertipe sama sebagai acuan gaya, walau topiknya beda.
           </div>
           <button class="button dark full" :disabled="loading" @click="generate()">
-            {{ loading ? 'Membuat soal…' : '✦ Generate soal ujian' }}
+            {{ loading ? 'Membuat soal…' : 'Generate soal ujian' }}
           </button>
         </div>
 
@@ -164,10 +177,32 @@ const printHtml = computed(() => {
               <button class="button" @click="copy">
                 Salin
               </button>
-              <button class="button" @click="() => window.print()">
+              <button class="button" @click="print">
                 Cetak/PDF
               </button>
             </div>
+
+            <form v-if="questions.length" class="banner-yellow" style="margin:14px 0 0" @submit.prevent="saveExam">
+              <strong>Simpan buat dinilai</strong>
+              <div class="field" style="margin:8px 0">
+                <label class="form-label" for="saveTitle">Judul</label>
+                <input id="saveTitle" v-model="saveTitle" class="input" placeholder="mis. PTS Fikih Kelas 7">
+              </div>
+              <div class="field" style="margin:0 0 10px">
+                <label class="form-label" for="saveClass">Kelas</label>
+                <select id="saveClass" v-model="saveClassId" class="select">
+                  <option value="">
+                    Tanpa daftar siswa
+                  </option>
+                  <option v-for="c in classList" :key="c.id" :value="c.id">
+                    {{ c.name }}
+                  </option>
+                </select>
+              </div>
+              <button class="button dark full" :disabled="saving || !saveTitle.trim()">
+                {{ saving ? 'Menyimpan…' : 'Simpan ujian' }}
+              </button>
+            </form>
 
             <div v-if="!questions.length" class="empty" style="margin-top:15px">
               Pilih materi, lalu generate untuk lihat soal di sini.
@@ -184,6 +219,22 @@ const printHtml = computed(() => {
                 <b>Kunci:</b> {{ q.answer }}
               </div>
             </article>
+          </div>
+
+          <div class="card">
+            <div class="section-header" style="margin-top:0">
+              <h2>Ujian tersimpan</h2><span>{{ savedExams.length }} ujian</span>
+            </div>
+            <div v-if="!savedExams.length" class="empty">
+              Belum ada. Generate soal, lalu simpan buat mulai menilai.
+            </div>
+            <NuxtLink v-for="e in savedExams" :key="e.id" :to="`/ujian/${e.id}`" class="feature-tile" style="min-height:0;margin-bottom:8px">
+              <span>
+                <strong>{{ e.title }}</strong>
+                <small>{{ e.className || 'Tanpa kelas' }} · {{ e.questionCount }} soal · {{ e.scored }} sudah dinilai</small>
+              </span>
+              <span class="arrow">↗</span>
+            </NuxtLink>
           </div>
         </div>
       </div>

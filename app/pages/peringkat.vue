@@ -4,6 +4,11 @@ import { avatarFor } from '~/constants/avatars'
 const { ranks, load, reset, legacyCount, importLegacy } = useRanks()
 const toast = useToast()
 
+// Poin disimpan per nama+kelas (teks bebas), jadi L/P dicocokkan ke daftar siswa lewat nama+kelas yang sama.
+const { data: students } = useFetch<{ name: string, gender: string | null, className: string }[]>('/api/students', { default: () => [] })
+const genderOf = computed(() => new Map(students.value.map(s => [`${s.name}|${s.className}`.toLowerCase(), s.gender])))
+const avatar = (r: { name: string, className: string }) => avatarFor(r.name, genderOf.value.get(`${r.name}|${r.className}`.toLowerCase()))
+
 const legacy = ref(0)
 onMounted(async () => {
   await load()
@@ -83,7 +88,7 @@ async function clearAll() {
             <article v-for="(r, i) in top3" :key="r.name + r.className" class="podium-card" :class="PLACE[i]">
               <span class="podium-rank">#{{ i + 1 }}</span>
               <div class="podium-avatar">
-                <img :src="avatarFor(r.name)" :alt="r.name" loading="lazy">
+                <img :src="avatar(r)" :alt="r.name" loading="lazy">
               </div>
               <div class="podium-info">
                 <strong>{{ r.name }}</strong>
@@ -100,7 +105,7 @@ async function clearAll() {
             <div class="card">
               <div v-for="(r, i) in rest" :key="r.name + r.className" class="rank-row">
                 <span class="rank-num">{{ String(i + 4).padStart(2, '0') }}</span>
-                <img class="rank-avatar" :src="avatarFor(r.name)" :alt="r.name" loading="lazy">
+                <img class="rank-avatar" :src="avatar(r)" :alt="r.name" loading="lazy">
                 <span class="rank-person">
                   <strong>{{ r.name }}</strong>
                   <small>{{ r.activities }} aktivitas · {{ r.className }}</small>
@@ -113,24 +118,21 @@ async function clearAll() {
 
         <div v-else class="leader-hero">
           <div class="leader-medal">
-            ✦
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" /></svg>
           </div>
           <h3>Belum ada juara</h3>
-          <p>Mulai dari cek jawaban atau kuis pertama.</p>
+          <p>Mulai dari kuis pertama.</p>
         </div>
       </div>
 
       <div class="right-panel">
-        <div class="card" style="background:var(--lilac);border-color:#222">
-          <h2 style="font:700 21px Outfit,sans-serif;margin:0 0 7px">
+        <div class="card">
+          <h2 style="font:700 18px var(--font);margin:0 0 6px">
             Poin yang adil.
           </h2>
-          <p style="font-size:12px;margin:0">
+          <p style="font-size:14px;color:var(--muted);margin:0">
             Guru meninjau hasil sebelum poin jawaban bebas diberikan. Papan ini buat memotivasi, bukan menghukum murid yang salah.
           </p>
-        </div>
-        <div class="small-banner">
-          Data cuma di browser ini. Kalau kelas pakai perangkat beda, leaderboard belum sinkron otomatis.
         </div>
         <button class="button full" @click="clearAll">
           Hapus semua poin

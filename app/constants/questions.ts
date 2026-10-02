@@ -12,9 +12,3 @@ export const VOCAB_TYPES = [
   { value: 'idiom', label: 'Idiom' },
   { value: 'slang', label: 'Slang' }
 ] as const
-
-export const GEMINI_MODELS = [
-  'gemini-flash-lite-latest',
-  'gemini-flash-latest',
-  'gemini-2.5-flash'
-] as const

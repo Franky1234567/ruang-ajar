@@ -39,8 +39,6 @@ export interface Vocab {
 }
 
 export interface Settings {
-  apiKey: string
-  model: string
   defaultClass: string
   focus: string
 }
@@ -231,7 +229,7 @@ export function useVocab() {
 }
 
 export const useSettings = () =>
-  usePersistentState<Settings>('settings', () => ({ apiKey: '', model: 'gemini-flash-lite-latest', defaultClass: 'SMP kelas 8', focus: '' }))
+  usePersistentState<Settings>('settings', () => ({ defaultClass: 'SMP kelas 8', focus: '' }))
 
 // Kelas default global — dipakai buat prefill form; editable per-form.
 export function useDefaultClass() {

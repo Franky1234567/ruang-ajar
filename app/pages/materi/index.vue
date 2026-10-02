@@ -71,8 +71,6 @@ async function bulkGenerate() {
   try {
     const fd = new FormData()
     fd.append('file', bulkFile.value)
-    if (settings.value.apiKey) fd.append('apiKey', settings.value.apiKey)
-    if (settings.value.model) fd.append('model', settings.value.model)
     const found = await $fetch<{ topic: string, notes: string }[]>('/api/material/outline', { method: 'POST', body: fd })
     bulkTopics.value = found.map(t => ({ ...t, status: 'pending' as const }))
 
@@ -86,8 +84,6 @@ async function bulkGenerate() {
         fd2.append('klass', form.klass)
         fd2.append('reference', t.notes || '')
         if (settings.value.focus) fd2.append('focus', settings.value.focus)
-        if (settings.value.apiKey) fd2.append('apiKey', settings.value.apiKey)
-        if (settings.value.model) fd2.append('model', settings.value.model)
         const mat = await $fetch<typeof draft>('/api/material', { method: 'POST', body: fd2 })
         await add({
           date: form.date, klass: form.klass, topic: t.topic, goal: '',
@@ -124,8 +120,6 @@ async function generate() {
     fd.append('goal', form.goal)
     fd.append('reference', form.reference)
     if (settings.value.focus) fd.append('focus', settings.value.focus)
-    if (settings.value.apiKey) fd.append('apiKey', settings.value.apiKey)
-    if (settings.value.model) fd.append('model', settings.value.model)
     if (file.value) fd.append('file', file.value)
 
     const res = await $fetch<typeof draft>('/api/material', { method: 'POST', body: fd })
@@ -230,7 +224,7 @@ onMounted(async () => {
             Membuat {{ bulkCurrent }}/{{ bulkTopics.length }}…
           </template>
           <template v-else>
-            ✦ Deteksi topik &amp; buat semua
+            Deteksi topik &amp; buat semua
           </template>
         </button>
       </div>
@@ -240,7 +234,7 @@ onMounted(async () => {
           v-for="(t, i) in bulkTopics"
           :key="i"
           class="inline-chip"
-          :style="t.status === 'done' ? 'background:#d9f5d9' : t.status === 'error' ? 'background:#fde0e0' : bulkCurrent === i + 1 ? 'background:#fff2aa' : ''"
+          :style="t.status === 'done' ? 'background:#dcfce7' : t.status === 'error' ? 'background:#fee2e2' : bulkCurrent === i + 1 ? 'background:#fef9c3' : ''"
         >
           {{ t.status === 'done' ? '✓' : t.status === 'error' ? '✕' : bulkCurrent === i + 1 ? '⋯' : '•' }} {{ t.topic }}
         </span>
@@ -280,7 +274,7 @@ onMounted(async () => {
         </div>
 
         <button class="button dark full" :disabled="loading" @click="generate">
-          {{ loading ? 'Menyusun…' : '✦ Susunkan materi' }}
+          {{ loading ? 'Menyusun…' : 'Susunkan materi' }}
         </button>
       </div>
 
@@ -343,9 +337,9 @@ onMounted(async () => {
       <div v-for="m in materials" :key="m.id" class="card" style="margin-bottom:0">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:start">
           <div style="min-width:0">
-            <strong style="font:700 16px Outfit,sans-serif;display:block">{{ m.title || m.topic }}</strong>
-            <p style="font-size:11px;color:#81858a;margin:3px 0 0">{{ m.klass || 'Umum' }} · {{ m.date }}</p>
-            <p v-if="m.goal" style="font-size:12px;color:#52555a;margin:7px 0 0">{{ m.goal }}</p>
+            <strong style="font:700 16px var(--font);display:block">{{ m.title || m.topic }}</strong>
+            <p style="font-size:13px;color:var(--subtle);margin:3px 0 0">{{ m.klass || 'Umum' }} · {{ m.date }}</p>
+            <p v-if="m.goal" style="font-size:14px;color:var(--muted);margin:6px 0 0">{{ m.goal }}</p>
           </div>
           <div style="display:flex;gap:6px;flex:none">
             <NuxtLink :to="`/materi/${m.id}`" class="button" style="min-height:38px;padding:7px 12px">
@@ -354,7 +348,7 @@ onMounted(async () => {
             <button class="button" style="min-height:38px;padding:7px 12px" @click="openMaterial(m)">
               Edit
             </button>
-            <button class="button" style="min-height:38px;padding:7px 10px;color:#b44c56" @click="removeMaterial(m.id)">
+            <button class="button" style="min-height:38px;padding:7px 10px;color:var(--danger)" @click="removeMaterial(m.id)">
               Hapus
             </button>
           </div>

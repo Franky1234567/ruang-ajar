@@ -20,12 +20,15 @@ async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
   }
 }
 
-export function resolveKey(event: H3Event, bodyKey?: string): string {
-  const key = bodyKey?.trim() || useRuntimeConfig(event).geminiApiKey
-  if (!key) {
-    throw createError({ statusCode: 400, statusMessage: 'API key belum diisi (Pengaturan atau env GEMINI_API_KEY).' })
+// Semua route AI lewat sini: wajib login, dihitung ke kuota bulanan guru.
+export async function resolveKey(event: H3Event): Promise<string> {
+  const userId = await requireUserId(event)
+  const config = useRuntimeConfig(event)
+  if (!config.geminiApiKey) {
+    throw createError({ statusCode: 500, statusMessage: 'GEMINI_API_KEY belum diset di server.' })
   }
-  return key
+  await consumeAiQuota(userId, await aiLimit(event, userId))
+  return config.geminiApiKey
 }
 
 async function callGemini<T>(key: string, model: string, prompt: string, schema: unknown): Promise<T> {

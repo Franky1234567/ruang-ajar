@@ -4,8 +4,14 @@ interface QuizQ { q: string, options: string[], answer: number, why: string }
 const settings = useSettings()
 const { addPoints } = useRanks()
 const toast = useToast()
+const { data: students } = useFetch<{ name: string, className: string }[]>('/api/students', { default: () => [] })
 
 const form = reactive({ student: '', klass: 'SMP kelas 8', topic: '', count: 3 })
+// pilih nama dari daftar siswa → kelasnya ikut keisi
+watch(() => form.student, (name) => {
+  const s = students.value.find(x => x.name === name)
+  if (s) form.klass = s.className
+})
 onMounted(() => { form.klass = settings.value.defaultClass || form.klass })
 const loading = ref(false)
 const quiz = ref<QuizQ[]>([])
@@ -30,9 +36,7 @@ async function start() {
       body: {
         topic: form.topic,
         count: form.count,
-        focus: settings.value.focus || undefined,
-        apiKey: settings.value.apiKey || undefined,
-        model: settings.value.model || undefined
+        focus: settings.value.focus || undefined
       }
     })
     index.value = 0
@@ -85,7 +89,6 @@ async function finish() {
     toast.add({ title: 'Gagal menyimpan poin.', color: 'error' })
   }
 }
-
 </script>
 
 <template>
@@ -106,7 +109,12 @@ async function finish() {
           <div class="row">
             <div class="field">
               <label class="form-label" for="quizStudent">Nama murid</label>
-              <input id="quizStudent" v-model="form.student" class="input" placeholder="Mis. Naya">
+              <input id="quizStudent" v-model="form.student" class="input" list="student-list" placeholder="Mis. Naya" autocomplete="off">
+              <datalist id="student-list">
+                <option v-for="s in students" :key="s.name + s.className" :value="s.name">
+                  {{ s.className }}
+                </option>
+              </datalist>
             </div>
             <div class="field">
               <label class="form-label" for="quizClass">Kelas</label>
@@ -124,7 +132,7 @@ async function finish() {
             </div>
           </div>
           <button class="button dark full" :disabled="loading" @click="start">
-            {{ loading ? 'Menyiapkan…' : '✦ Mulai kuis' }}
+            {{ loading ? 'Menyiapkan…' : 'Mulai kuis' }}
           </button>
         </template>
 
@@ -161,7 +169,7 @@ async function finish() {
       <div class="right-panel">
         <div class="leader-hero">
           <div class="leader-medal">
-            ✦
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z" /></svg>
           </div>
           <h3>Main, belajar, ulangi.</h3>
           <p>Jawaban boleh salah. Beri penjelasan singkat sebelum lanjut.</p>

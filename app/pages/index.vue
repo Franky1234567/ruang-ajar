@@ -2,6 +2,7 @@
 const { items: materials, load } = useMaterials()
 onMounted(load)
 const last = computed(() => materials.value[0])
+const settings = useSettings()
 </script>
 
 <template>
@@ -10,7 +11,7 @@ const last = computed(() => materials.value[0])
       Ruang kelas
     </div>
     <h1 class="heading">
-      Halo, Bu/Pak Guru 👋
+      Halo, Bu/Pak Guru
     </h1>
     <p class="subhead">
       Satu tempat buat nyiapin pelajaran dan menemani murid latihan.
@@ -33,11 +34,6 @@ const last = computed(() => materials.value[0])
           <h2>Langsung ke</h2><span>Pilih aktivitas</span>
         </div>
         <div class="stack">
-          <NuxtLink to="/cek" class="feature-tile">
-            <span class="tile-icon cyan"><svg class="icon" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6" /></svg></span>
-            <span><strong>Cek jawaban</strong><small>Murid maju dan ketik jawabannya</small></span>
-            <span class="arrow">↗</span>
-          </NuxtLink>
           <NuxtLink to="/kuis" class="feature-tile">
             <span class="tile-icon yellow"><svg class="icon" viewBox="0 0 24 24"><path d="M12 18h.01M9 9a3 3 0 1 1 4 2.8c-.7.4-1 1-1 2.2" /></svg></span>
             <span><strong>Mulai kuis</strong><small>Latihan singkat untuk satu kelas</small></span>
@@ -52,14 +48,11 @@ const last = computed(() => materials.value[0])
       </div>
 
       <aside class="desktop-side">
-        <div class="intro-illustration">
-          Aa.
-        </div>
         <div class="section-header">
           <h2>Materi terakhir</h2>
         </div>
         <div v-if="last" class="lesson-card">
-          <small>{{ last.klass || 'Umum' }} · Bahasa Inggris</small>
+          <small>{{ [last.klass || 'Umum', settings.focus].filter(Boolean).join(' · ') }}</small>
           <h3>{{ last.title || last.topic }}</h3>
           <p>{{ last.goal }}</p>
           <span class="inline-chip">Siap dipakai</span>
@@ -74,7 +67,7 @@ const last = computed(() => materials.value[0])
       <h2>Materi terakhir</h2><span>{{ materials.length }} materi</span>
     </div>
     <div v-if="last" class="lesson-card mobile-lesson">
-      <small>{{ last.klass || 'Umum' }} · Bahasa Inggris</small>
+      <small>{{ [last.klass || 'Umum', settings.focus].filter(Boolean).join(' · ') }}</small>
       <h3>{{ last.title || last.topic }}</h3>
       <p>{{ last.goal }}</p>
       <span class="inline-chip">Siap dipakai</span>

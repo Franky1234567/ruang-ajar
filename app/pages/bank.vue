@@ -132,7 +132,7 @@ async function removeItem(id: string) {
             <small>{{ p.type }}{{ p.topic ? ` · ${p.topic}` : '' }}</small>
             <textarea v-model="p.text" rows="3" @change="saveEdit(p)" />
             <footer>
-              <span style="font-size:10px;color:#999">Contoh #{{ i + 1 }}</span>
+              <span style="font-size:12px;color:var(--subtle)">Contoh #{{ i + 1 }}</span>
               <button @click="removeItem(p.id)">Hapus</button>
             </footer>
           </article>

@@ -33,9 +33,7 @@ async function generate() {
         count: count.value,
         type: type.value,
         klass: klass.value,
-        focus: settings.value.focus || undefined,
-        apiKey: settings.value.apiKey || undefined,
-        model: settings.value.model || undefined
+        focus: settings.value.focus || undefined
       }
     })
   } catch (e) {
@@ -137,7 +135,7 @@ const learnedCount = computed(() => items.value.filter(v => v.learned).length)
           </div>
         </div>
         <button class="button dark full" :disabled="loading" @click="generate">
-          {{ loading ? 'Membuat…' : '✦ Generate vocab' }}
+          {{ loading ? 'Membuat…' : 'Generate vocab' }}
         </button>
 
         <template v-if="preview.length">
@@ -205,13 +203,13 @@ const learnedCount = computed(() => items.value.filter(v => v.learned).length)
           <div v-for="v in shown" :key="v.id" class="card" style="margin-bottom:0;padding:13px 15px">
             <div style="display:flex;justify-content:space-between;gap:12px;align-items:start">
               <div style="min-width:0">
-                <strong style="font:700 15px Outfit,sans-serif">{{ v.word }}</strong>
+                <strong style="font:700 15px var(--font)">{{ v.word }}</strong>
                 <span style="color:var(--muted);font-size:13px"> — {{ v.meaning }}</span>
-                <p v-if="v.example" style="font-size:12px;color:#77857f;margin:4px 0 0">
+                <p v-if="v.example" style="font-size:14px;color:var(--muted);margin:4px 0 0">
                   {{ v.example }}
                 </p>
-                <span v-if="v.type && v.type !== 'kata'" style="font-size:10px;color:#b8860b;font-weight:800;text-transform:uppercase;margin-right:6px">{{ v.type }}</span>
-                <span v-if="v.theme" style="font-size:10px;color:#999">#{{ v.theme }}</span>
+                <span v-if="v.type && v.type !== 'kata'" style="font-size:12px;color:var(--accent);font-weight:700;text-transform:uppercase;margin-right:6px">{{ v.type }}</span>
+                <span v-if="v.theme" style="font-size:12px;color:var(--subtle)">#{{ v.theme }}</span>
               </div>
               <div style="display:flex;flex-direction:column;gap:5px;flex:none;align-items:end">
                 <button
@@ -222,7 +220,7 @@ const learnedCount = computed(() => items.value.filter(v => v.learned).length)
                 >
                   {{ v.learned ? '✓ Hafal' : 'Tandai hafal' }}
                 </button>
-                <button style="border:0;background:transparent;color:#b44c56;font-size:11px;font-weight:800;cursor:pointer" @click="removeItem(v.id)">
+                <button style="border:0;background:transparent;color:var(--danger);font-size:13px;font-weight:600;min-height:36px" @click="removeItem(v.id)">
                   Hapus
                 </button>
               </div>
